@@ -138,3 +138,4 @@ ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
 *.lnk
+__pycache__/game_logic.cpython-313.pyc

@@ -124,11 +124,12 @@ python -m unittest discover
 - ✅ Score tracking
 - ✅ Input validation
 - ✅ Winner determination
+- ✅ Optional AI opponent (Gemini or heuristic fallback)
 
 ## Requirements
 
 - Python 3.7 or higher
-- No external dependencies required!
+- Optional: Gemini AI opponent requires `google-generativeai` and a `GEMINI_API_KEY`.
 
 ## Game Rules
 
@@ -148,4 +149,42 @@ python -m unittest discover
 - Plan ahead to create chains of squares
 - The endgame often involves sacrificing squares to set up larger chains
 
-Enjoy playing Dots and Boxes! 🎮
+## Game State Representation
+Grid.size + Grid.lines → board geometry
+GameLogic.completed_squares (which boxes are done; you may also want a mapping to the claiming player)
+GameLogic.current_player_index and players (with scores)
+
+## AI Opponent (Optional)
+You can add an AI player when configuring players by typing `AI` for the player type.
+
+### How It Chooses Moves
+1. Attempts a Gemini model call (if `GEMINI_API_KEY` and dependency installed).
+2. If unavailable or invalid response, falls back to heuristic:
+   - Complete a square if possible.
+   - Avoid creating a third side of a box (setting up opponent).
+   - Otherwise choose a random valid move.
+
+### Installing Gemini SDK
+```bash
+pip install google-generativeai
+```
+
+### Setting the API Key (Windows PowerShell)
+```powershell
+$Env:GEMINI_API_KEY = "YOUR_KEY_HERE"
+```
+(For permanent use, add to your profile or a .env file and load it.)
+
+### Dynamic Prompt Contents Sent to Gemini
+- Board size
+- Current lines
+- Completed squares
+- Player scores
+- Current player name
+- Valid moves list (may truncate if large)
+
+### Expected Model Output
+Return exactly: `x1,y1 x2,y2` (e.g., `0,0 0,1`). Any other format triggers fallback.
+
+### Offline / No Key
+If no key or SDK missing, the AI still operates via heuristic.

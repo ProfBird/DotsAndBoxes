@@ -1,5 +1,6 @@
 from grid import Grid
 from player import Player
+from ai_player import AIPlayer
 from game_logic import GameLogic
 from ui import UI
 
@@ -36,13 +37,18 @@ def main():
         print("Invalid input. Using 2 players.")
         num_players = 2
 
-    # Create players
+    # Create players (human or AI)
     players = []
+    print("\nConfigure players:")
     for i in range(num_players):
         name = input(f"Enter name for Player {i + 1}: ").strip()
         if not name:
             name = f"Player {i + 1}"
-        players.append(Player(name))
+        ptype = input("  Type 'AI' for AI player, anything else for Human: ").strip().lower()
+        if ptype == 'ai':
+            players.append(AIPlayer(name))
+        else:
+            players.append(Player(name))
 
     # Initialize game components
     grid = Grid(grid_size)
@@ -58,28 +64,34 @@ def main():
         ui.display_scores()
         ui.display_current_player()
 
-        # Get player input
-        line_coords = ui.get_line_input()
-        if line_coords is None:
-            continue
+        current = game_logic.get_current_player()
+        if isinstance(current, AIPlayer):
+            move = current.choose_move(game_logic)
+            if move is None:
+                print("AI has no valid moves.")
+                break
+            start, end = move
+            print(f"AI {current.name} plays: {start[0]},{start[1]} {end[0]},{end[1]}")
+        else:
+            # Human input
+            line_coords = ui.get_line_input()
+            if line_coords is None:
+                continue
+            start, end = line_coords
 
-        start, end = line_coords
-
-        # Try to add the line
+        # Try to add line for either player type
         if grid.add_line(start, end):
-            # Check if squares were completed
             squares_completed = game_logic.check_for_squares(start, end)
-
             if squares_completed > 0:
-                print(f"\n🎊 {game_logic.get_current_player().name} completed {squares_completed} square(s)!")
-                game_logic.get_current_player().add_score(squares_completed)
+                print(f"\n🎊 {current.name} completed {squares_completed} square(s)!")
+                current.add_score(squares_completed)
                 print("You get another turn!")
             else:
-                # Switch to next player only if no squares were completed
                 game_logic.switch_player()
         else:
             print("\n❌ Invalid move! That line is either already drawn, not adjacent, or out of bounds.")
-            print("Try again.")
+            if not isinstance(current, AIPlayer):
+                print("Try again.")
 
     # Game over - display results
     ui.display_grid()
